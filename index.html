@@ -710,12 +710,17 @@
           const imageData = await readImage(file);
           if (pendingImageTarget.type === 'home') {
             localStorage.setItem('calendar.homeImage', imageData);
+            if (typeof state !== 'undefined') state.homeImage = imageData;
             showSkinToast('首页图片已更新');
           } else {
             const images = JSON.parse(localStorage.getItem('calendar.monthImages') || '{}');
             images[pendingImageTarget.month] = imageData;
             localStorage.setItem('calendar.monthImages', JSON.stringify(images));
             localStorage.setItem('calendar.monthImageMode', 'monthly');
+            if (typeof state !== 'undefined') {
+              state.monthImages = images;
+              state.monthImageMode = 'monthly';
+            }
             showSkinToast(`${Number(pendingImageTarget.month)} 月图片已更新`);
           }
           pendingImageTarget = null;
@@ -748,22 +753,15 @@
       }
 
       function applyStoredImages() {
-        const homeImage = localStorage.getItem('calendar.homeImage');
-        const monthImage = localStorage.getItem('calendar.monthImage');
-        let monthImages = {};
-        try {
-          monthImages = JSON.parse(localStorage.getItem('calendar.monthImages') || '{}');
-        } catch {
-          monthImages = {};
+        const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
+        if (homeHero && typeof currentHomeImage === 'function' && typeof setImageSource === 'function') {
+          setImageSource(homeHero, currentHomeImage());
         }
 
-        const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
-        if (homeHero && homeImage && homeHero.getAttribute('src') !== homeImage) homeHero.src = homeImage;
-
         document.querySelectorAll('.month-art img:not(.image-feather-extension),.day-page .hero img:not(.image-feather-extension)').forEach(img => {
-          const month = currentMonthKey();
-          const src = monthImages[month] || monthImage;
-          if (src && img.getAttribute('src') !== src) img.src = src;
+          if (typeof monthImageFor !== 'function' || typeof setImageSource !== 'function') return;
+          const month = Number(currentMonthKey()) || new Date().getMonth() + 1;
+          setImageSource(img, monthImageFor(new Date(2026, month - 1, 1)));
         });
         setupFeatherExtensions();
       }
