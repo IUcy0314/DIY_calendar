@@ -19,7 +19,7 @@ button{cursor:pointer}
 .hero{position:relative;overflow:hidden;background:#eeeaf3;min-height:650px}
 .hero img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease,filter .35s ease}
 .hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,var(--paper) 100%),linear-gradient(0deg,var(--paper) 0,transparent 18%),linear-gradient(180deg,var(--paper) 0,transparent 14%);pointer-events:none}
-.hero.breathe img{transform:scale(1.015);filter:brightness(1.03)}
+.hero.breathe img{transform:none;filter:none}
 .content{padding:58px clamp(42px,7vw,130px) 55px;max-width:1040px;width:100%;margin:auto}
 .date-lock{transition:opacity .18s ease,transform .18s ease}.date-lock.out{opacity:0;transform:translateY(var(--slide,12px))}.date-lock.in{animation:arrive .32s ease-out}
 @keyframes arrive{from{opacity:0;transform:translateY(var(--enter,-16px))}to{opacity:1;transform:none}}
