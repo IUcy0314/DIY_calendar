@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="504" height="824" viewBox="0 0 504 824">
+  <defs>
+    <clipPath id="crop"><rect x="0" y="0" width="504" height="824"/></clipPath>
+  </defs>
+  <g clip-path="url(#crop)">
+    <image href="02-app-shell-paper_1440x900.svg" x="0" y="-76" width="1440" height="900" preserveAspectRatio="none"/>
+  </g>
+</svg>
