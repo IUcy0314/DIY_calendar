@@ -25,14 +25,33 @@ const seed=[
  {id:'a5',title:'客户需求沟通',date:'2026-06-27',allDay:false,start:'15:00',end:'16:00',category:'工作',priority:'urgent',status:'todo',notes:''},
  {id:'a6',title:'阅读与思考',date:'2026-06-28',allDay:false,start:'20:00',end:'21:00',category:'学习',priority:'normal',status:'todo',notes:''}
 ];
+const legacyDefaultImage='assets/wisteria-staircase.png';
+const skinDefaultImages={
+ 'sea-salt':{
+  home:'assets/custom/nikki8',
+  months:['nikki1','nikki2','nikki3','nikki4','nikki5','nikki6','nikki13','nikki7','nikki10','nikki11','nikki12','nikki_BLUE1'].map(name=>`assets/custom/${name}`)
+ },
+ 'metal-undertow':{
+  home:'assets/custom/nikki_dark10',
+  months:['nikki_dark8','nikki_dark11','nikki_dark18','nikki_dark4','nikki_dark15','nikki_dark17','nikki_dark16','nikki_dark12','nikki_dark7','nikki_dark1','nikki_dark14','nikki_dark5'].map(name=>`assets/custom/${name}`)
+ }
+};
+function currentSkin(){return localStorage.getItem('calendar.skin')||'default'}
+function activeSkinDefaults(){return skinDefaultImages[currentSkin()]||null}
+function isUserImage(src){return !!src&&src!==legacyDefaultImage}
+function imageCandidates(src){if(!src||src.startsWith('data:')||/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(src))return [src];return ['.png','.jpg','.jpeg','.webp',''].map(ext=>src+ext)}
+function imageAttrs(src){let candidates=imageCandidates(src);return `src="${candidates[0]}" data-image-fallbacks="${candidates.slice(1).join('|')}" onerror="handleImageFallback(this)"`}
+function handleImageFallback(img){let fallbacks=(img.dataset.imageFallbacks||'').split('|').filter(Boolean);if(!fallbacks.length){img.onerror=null;return}let next=fallbacks.shift();img.dataset.imageFallbacks=fallbacks.join('|');img.src=next}
+function setImageSource(img,src){if(!img||!src)return;let candidates=imageCandidates(src);img.dataset.imageFallbacks=candidates.slice(1).join('|');img.onerror=()=>handleImageFallback(img);img.src=candidates[0]}
 let state={view:'home',date:new Date(2026,5,22),month:new Date(2026,5,1),settings:false,settingsPage:'main',modal:null,activities:JSON.parse(localStorage.getItem('calendar.activities')||'null')||seed,categories:JSON.parse(localStorage.getItem('calendar.categories')||'null')||['工作','学习','生活','会议','纪念日','未分类'],palette:localStorage.getItem('calendar.palette')||'purple',homeImage:localStorage.getItem('calendar.homeImage')||'assets/wisteria-staircase.png',monthImage:localStorage.getItem('calendar.monthImage')||'assets/wisteria-staircase.png',monthImageMode:localStorage.getItem('calendar.monthImageMode')||'shared',monthImages:JSON.parse(localStorage.getItem('calendar.monthImages')||'{}'),wheel:0,locked:false,drag:null};
 const palettes={purple:['#b891d0','#eadcf2','#f4ecf8'],green:['#8da887','#dce6d9','#f1f5ef'],blue:['#315fc6','#d9e3f8','#eff3fc'],apricot:['#ffb246','#ffe8b2','#fff5e2'],rose:['#ef8f8f','#e5c7c6','#e8e2e2'],lime:['#f7e476','#c9e5c4','#f0f8ee'],lake:['#5fa9c7','#b4d8e7','#f4eddf'],mist:['#b39dd6','#d3c5e7','#e1e5ea']};
 const paletteNames={purple:'紫藤',green:'雾绿',blue:'克莱因蓝',apricot:'暖杏橙',rose:'藕粉胭红',lime:'浅青柠黄',lake:'天青湖蓝',mist:'雾紫熏紫'};
 function save(){localStorage.setItem('calendar.activities',JSON.stringify(state.activities))}function setTheme(){let p=palettes[state.palette];document.documentElement.style.setProperty('--accent',p[0]);document.documentElement.style.setProperty('--accent-soft',p[1]);document.documentElement.style.setProperty('--accent-pale',p[2])}setTheme();
 function gear(){return `<button class="gear" aria-label="设置" title="设置">${gearSvg()}</button>`}function gearSvg(){return `<svg viewBox="0 0 24 24"><path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.5-2-3.4-2.5 1a7.6 7.6 0 0 0-1.7-1L14.8 3h-4l-.4 3a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.4 2 1.5a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.4 2.5-1a7.6 7.6 0 0 0 1.7 1l.4 3h4l.4-3a7.6 7.6 0 0 0 1.7-1l2.5 1 2-3.4-2-1.5ZM12.8 15.6a3.7 3.7 0 1 1-1.6-7.2 3.7 3.7 0 0 1 1.6 7.2Z"/></svg>`}
 function nav(){return `<nav class="nav"><div class="nav-links"><button class="nav-btn ${state.view==='home'?'active':''}" data-view="home">首页</button><button class="nav-btn ${state.view!=='home'?'active':''}" data-view="calendar">本月</button></div>${gear()}</nav>`}
-function hero(src=state.homeImage,cls='hero'){return `<div class="${cls}" id="hero"><img src="${src}" alt="紫藤花与白色旋转楼梯"></div>`}
-function monthKey(d){return pad(d.getMonth()+1)}function monthImageFor(d){return state.monthImageMode==='monthly'?(state.monthImages[monthKey(d)]||state.monthImage):state.monthImage}
+function currentHomeImage(){let defaults=activeSkinDefaults();return isUserImage(state.homeImage)?state.homeImage:(defaults?.home||legacyDefaultImage)}
+function hero(src=currentHomeImage(),cls='hero'){return `<div class="${cls}" id="hero"><img ${imageAttrs(src)} alt="月历展示图片"></div>`}
+function monthKey(d){return pad(d.getMonth()+1)}function monthImageFor(d){let key=monthKey(d),defaults=activeSkinDefaults();if(state.monthImageMode==='monthly'&&state.monthImages[key])return state.monthImages[key];if(isUserImage(state.monthImage))return state.monthImage;return defaults?.months[d.getMonth()]||legacyDefaultImage}
 function quickToday(kind){return `<button class="quick-today" data-quick-today="${kind}" aria-label="快速回到当前${kind==='home'?'日期':'月份'}" title="回到当前${kind==='home'?'日期':'月份'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2v8.3a.8.8 0 0 1-.8.8h-5.1v-5.8H9.4v5.8H4.3a.8.8 0 0 1-.8-.8v-8.3Z"/></svg></button>`}
 function priorityClass(p){return `priority ${p}`}function dayActivities(s){return state.activities.filter(a=>a.date===s)}
 function home(){let d=state.date,s=iso(d),list=dayActivities(s),next=state.activities.filter(a=>a.date>s&&a.status!=='done').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);return `<main class="page split">${hero()}<section class="content"><div class="date-lock"><div class="date-display"><div class="date-big"><span class="month">${d.getMonth()+1}</span>/${d.getDate()}</div><span class="spark">✦</span></div><div class="date-sub">${d.getFullYear()} ${months[d.getMonth()]} · ${weekdays[d.getDay()]}</div><div class="rule"></div><h2 class="section-title">${s===iso(new Date())?'今日待办':'当日待办'}</h2><div class="task-list">${list.length?list.map(taskRow).join(''):`<div class="empty" style="padding:35px"><div class="empty-symbol">◇</div>这一天轻盈无事</div>`}</div><h2 class="section-title">近期安排</h2><div class="upcoming ${next.length?'has-items':'is-empty'}">${next.length?next.map(a=>`<div><span class="dot">•</span>${dateLabel(a.date)}　${a.title}</div><div>${a.date.slice(5).replace('-','/')}　${a.start||'全天'}</div>`).join(''):'<div>近期无事哦</div>'}</div></div></section></main>${quickToday('home')}`}
