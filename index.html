@@ -814,22 +814,15 @@
       }
 
       function applyStoredImages() {
-        const homeImage = localStorage.getItem('calendar.homeImage');
-        const monthImage = localStorage.getItem('calendar.monthImage');
-        let monthImages = {};
-        try {
-          monthImages = JSON.parse(localStorage.getItem('calendar.monthImages') || '{}');
-        } catch {
-          monthImages = {};
+        const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
+        if (homeHero && typeof currentHomeImage === 'function' && typeof setImageSource === 'function') {
+          setImageSource(homeHero, currentHomeImage());
         }
 
-        const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
-        if (homeHero && homeImage) homeHero.src = homeImage;
-
         document.querySelectorAll('.month-art img:not(.image-feather-extension),.day-page .hero img:not(.image-feather-extension)').forEach(img => {
-          const month = currentMonthKey();
-          const src = monthImages[month] || monthImage;
-          if (src) img.src = src;
+          if (typeof monthImageFor !== 'function' || typeof setImageSource !== 'function') return;
+          const month = Number(currentMonthKey()) || new Date().getMonth() + 1;
+          setImageSource(img, monthImageFor(new Date(2026, month - 1, 1)));
         });
         setupFeatherExtensions();
       }
