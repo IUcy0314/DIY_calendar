@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fbfaf8">
+  <title>月白 · 个人日历</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root{--app-scale:1!important}
+    html,body{width:100%;height:100%;overflow:hidden}
+    #app{width:100vw;height:100vh;overflow:hidden;display:flex;justify-content:center;align-items:flex-start}
+    .shell{width:min(87.5vw,1440px)!important;height:100vh!important;min-height:0!important;flex:0 0 min(87.5vw,1440px)!important;transform:none!important}
+    .nav{height:76px;min-height:76px}
+    .page,.split,.calendar-layout{height:calc(100vh - 76px)!important;min-height:0!important}
+    .split,.calendar-layout{grid-template-columns:35% 1fr!important;overflow:hidden}
+    .hero,.month-art,.cal-wrap{height:100%!important;min-height:0!important}
+    .content{max-width:none;padding:clamp(24px,4vh,58px) clamp(42px,6vw,100px) clamp(22px,3.5vh,55px)}
+    main.page.split:not(.day-page) .content{align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+    main.page.split:not(.day-page) .date-sub{margin:18px 0 12px}
+    main.page.split:not(.day-page) .rule{margin-bottom:24px}
+    main.page.split:not(.day-page) .section-title{margin-bottom:12px}
+    main.page.split:not(.day-page) .task-list{margin-bottom:26px}
+    main.page.split:not(.day-page) .task{min-height:58px}
+    main.page.split:not(.day-page) .upcoming{row-gap:12px}
+    .calendar-layout .cal-wrap{padding:clamp(24px,4vh,36px) 4.5% clamp(20px,3.5vh,32px)}
+    .day-page .content{overflow:auto}
+    @media(max-height:760px){
+      main.page.split:not(.day-page) .content{padding-top:22px;padding-bottom:20px}
+      main.page.split:not(.day-page) .date-sub{margin:12px 0 8px}
+      main.page.split:not(.day-page) .rule{margin-bottom:16px}
+      main.page.split:not(.day-page) .section-title{margin-bottom:8px}
+      main.page.split:not(.day-page) .task-list{margin-bottom:16px}
+      main.page.split:not(.day-page) .task{min-height:50px}
+      main.page.split:not(.day-page) .upcoming{row-gap:8px}
+    }
+    .skin-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .skin-option{border:1px solid #d7d2da;background:#fff;border-radius:7px;padding:12px 10px;text-align:center}
+    .skin-option.active{border-color:var(--accent);background:var(--accent-pale);color:var(--accent)}
+    html[data-skin="sea-salt"] body{background:#fbfaf8}
+    html[data-skin="sea-salt"] .shell{background:url("assets/skin1/02-app-shell-paper_1440x900.png") center/100% 100% no-repeat!important}
+    html[data-skin="sea-salt"] .nav{border:0;background:center/100% 100% no-repeat!important;backdrop-filter:none}
+    html[data-skin="sea-salt"][data-cal-view="home"] .nav{background-image:url("assets/skin1/03-top-nav_1440x76.svg")!important}
+    html[data-skin="sea-salt"]:not([data-cal-view="home"]) .nav{background-image:url("assets/skin1/03-top-nav_1440x76 2.svg")!important}
+    html[data-skin="sea-salt"] .nav-btn{color:transparent!important;text-shadow:none}
+    html[data-skin="sea-salt"] .nav-btn.active:after{display:none}
+    html[data-skin="sea-salt"] .gear svg{opacity:0}
+    html[data-skin="sea-salt"] .hero{background:url("assets/skin1/04-home-left-hero_504x824.svg") center/100% 100% no-repeat!important}
+    html[data-skin="sea-salt"] .day-page .hero{background-image:url("assets/skin1/06-day-left-hero_504x824.svg")!important}
+    html[data-skin="sea-salt"] .month-art{background:url("assets/skin1/08-month-cover-template_504x824.svg") center/100% 100% no-repeat!important}
+    html[data-skin="sea-salt"] .hero img,
+    html[data-skin="sea-salt"] .month-art img{opacity:0}
+    html[data-skin="sea-salt"] .hero:after,
+    html[data-skin="sea-salt"] .month-art:after{display:none}
+    html[data-skin="sea-salt"] .day-page .content{background:url("assets/skin1/07-day-right-panel_936x824.svg") center/100% 100% no-repeat}
+    html[data-skin="sea-salt"] .task{min-height:58px;border:0;background:url("assets/skin1/10-task-row_760x58 2.png") left center/100% 58px no-repeat;padding:0 20px 0 18px}
+    html[data-skin="sea-salt"] .task.done{background-image:url("assets/skin1/10-task-row_760x58.png")}
+    html[data-skin="sea-salt"] .task .check{opacity:0}
+    html[data-skin="sea-salt"] .day{border:0;background:url("assets/skin1/11-calendar-cell_122x108.svg") center/100% 100% no-repeat!important}
+    html[data-skin="sea-salt"] .day.today{box-shadow:inset 0 0 0 2px rgba(108,185,245,.55);background-color:transparent!important}
+    html[data-skin="sea-salt"] .day.today .num{background:rgba(255,255,255,.55)}
+    html[data-skin="sea-salt"] .activity-card{border:0;box-shadow:none;background:url("assets/skin1/12-activity-card_760x116.svg") center/100% 100% no-repeat}
+    html[data-skin="sea-salt"] .activity-card:after{display:none}
+    html[data-skin="sea-salt"] .settings{background:url("assets/skin1/13-settings-panel_410x720.png") center/100% 100% no-repeat!important;box-shadow:none;border-radius:18px}
+    html[data-skin="sea-salt"] .settings:before{display:none}
+    html[data-skin="sea-salt"] .modal{background:url("assets/skin1/14-modal-panel_660x560.png") center/100% 100% no-repeat!important;box-shadow:none;border-radius:24px}
+    html[data-skin="sea-salt"] .quick-today{border:0;background:url("assets/skin1/15-floating-today-button_64x64.png") center/100% 100% no-repeat!important;box-shadow:none;color:transparent}
+    html[data-skin="sea-salt"] .quick-today svg{opacity:0}
+    html[data-skin="sea-salt"] .skin-option{border:2px solid rgba(112,188,246,.75);background:rgba(255,255,255,.56);box-shadow:inset 0 0 10px rgba(121,196,255,.22);color:#55a7e8}
+    html[data-skin="sea-salt"] .skin-option.active{background:linear-gradient(135deg,rgba(255,248,187,.72),rgba(213,241,255,.72));border-color:#77c4ff;color:#2894df}
+    html[data-skin="sea-salt"] .settings,
+    html[data-skin="sea-salt"] .modal{
+      border:3px solid rgba(116,195,255,.86);
+      background:
+        linear-gradient(135deg,rgba(255,250,195,.62),rgba(219,244,255,.82) 54%,rgba(255,255,255,.72)),
+        url("assets/skin1/02-app-shell-paper_1440x900.png") center/cover no-repeat!important;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.78),0 0 0 1px rgba(156,215,255,.42),0 12px 32px rgba(98,174,235,.18);
+    }
+    html[data-skin="sea-salt"] .settings{border-radius:18px}
+    html[data-skin="sea-salt"] .modal{border-radius:24px}
+    html[data-skin="sea-salt"] .hero,
+    html[data-skin="sea-salt"] .day-page .hero,
+    html[data-skin="sea-salt"] .month-art{background:#eae9f0!important}
+    html[data-skin="sea-salt"] .hero img,
+    html[data-skin="sea-salt"] .month-art img{opacity:1}
+    html[data-skin="sea-salt"] .hero:after,
+    html[data-skin="sea-salt"] .month-art:after{display:block!important}
+    html[data-skin="sea-salt"] .day-page .content{background:none!important}
+    html[data-skin] .hero,
+    html[data-skin] .month-art{background:#eae9f0!important}
+    html[data-skin] .hero img,
+    html[data-skin] .month-art img{
+      opacity:1!important;
+      -webkit-mask-image:
+        linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.62) 86%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.68) 11%,#000 22%,#000 78%,rgba(0,0,0,.68) 89%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.62) 86%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.68) 11%,#000 22%,#000 78%,rgba(0,0,0,.68) 89%,transparent 100%);
+      mask-composite:intersect;
+    }
+    html[data-skin] .hero:after,
+    html[data-skin] .month-art:after{display:none!important}
+    .vertical-copy{
+      cursor:grab;
+      font-size:32px!important;
+      line-height:1.25;
+      max-height:none!important;
+      text-shadow:none!important;
+      -webkit-text-stroke:0 transparent!important;
+      paint-order:normal;
+      touch-action:none;
+      user-select:none;
+      z-index:6;
+    }
+    .vertical-copy:active{cursor:grabbing}
+    .vertical-copy small{
+      font-size:16px!important;
+      line-height:1.55!important;
+      text-shadow:none!important;
+      -webkit-text-stroke:0 transparent!important;
+      paint-order:normal;
+    }
+    .vertical-copy[data-dock="left"]{left:9%;right:auto;top:70px;bottom:auto;writing-mode:vertical-rl;text-align:left}
+    .vertical-copy[data-dock="right"]{left:auto;right:9%;top:70px;bottom:auto;writing-mode:vertical-rl;text-align:left}
+    .vertical-copy[data-dock="bottom"]{
+      left:8%;right:8%;top:auto;bottom:38px;
+      writing-mode:horizontal-tb;
+      max-width:84%;
+      font-size:25px!important;
+      letter-spacing:.08em;
+      text-align:left;
+    }
+    .vertical-copy[data-dock="bottom"] small{display:block;margin-top:8px;font-size:14px!important;line-height:1.45!important}
+    .vertical-copy[data-dock="free"]{writing-mode:vertical-rl}
+    html[data-image-text="hidden"] .vertical-copy{display:none!important}
+    .settings .setting-block:has(.image-input){display:none!important}
+    .image-tools{
+      position:absolute;
+      right:18px;
+      bottom:18px;
+      z-index:20;
+      display:flex;
+      gap:10px;
+      opacity:0;
+      transform:translateY(8px);
+      pointer-events:none;
+      transition:opacity .18s ease,transform .18s ease;
+    }
+    .hero:hover .image-tools,
+    .month-art:hover .image-tools,
+    .hero:focus-within .image-tools,
+    .month-art:focus-within .image-tools{
+      opacity:1;
+      transform:none;
+      pointer-events:auto;
+    }
+    .image-tool-btn{
+      border:1px solid rgba(100,170,230,.62);
+      border-radius:999px;
+      background:rgba(255,255,255,.56);
+      color:#4c9eda;
+      backdrop-filter:blur(8px);
+      box-shadow:0 6px 18px rgba(70,145,210,.18),inset 0 0 0 1px rgba(255,255,255,.56);
+      padding:9px 15px;
+      font-size:14px;
+      line-height:1;
+      letter-spacing:.04em;
+    }
+    .image-tool-btn:hover{background:rgba(255,255,255,.76);border-color:rgba(100,180,245,.86)}
+    .hero img,
+    .month-art img{
+      opacity:1!important;
+      -webkit-mask-image:
+        linear-gradient(to right,#000 0%,#000 70%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.28) 94%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.30) 7%,rgba(0,0,0,.78) 15%,#000 26%,#000 74%,rgba(0,0,0,.78) 85%,rgba(0,0,0,.30) 93%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,#000 0%,#000 70%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.28) 94%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.30) 7%,rgba(0,0,0,.78) 15%,#000 26%,#000 74%,rgba(0,0,0,.78) 85%,rgba(0,0,0,.30) 93%,transparent 100%);
+      mask-composite:intersect;
+    }
+    .hero:after,
+    .month-art:after{display:none!important}
+    .hero,
+    .month-art{background:transparent!important}
+    .split,
+    .calendar-layout{overflow:visible!important}
+    .hero,
+    .month-art{overflow:visible!important;isolation:isolate}
+    .content,
+    .cal-wrap{position:relative;z-index:2}
+    .hero img,
+    .month-art img{
+      position:absolute;
+      left:0;
+      top:0;
+      width:100%!important;
+      height:100%!important;
+      max-width:none;
+      object-fit:cover;
+      pointer-events:none;
+      z-index:0;
+      -webkit-mask-image:
+        linear-gradient(to right,#000 0%,#000 62%,rgba(0,0,0,.86) 72%,rgba(0,0,0,.46) 88%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.36) 7%,rgba(0,0,0,.82) 15%,#000 25%,#000 75%,rgba(0,0,0,.82) 85%,rgba(0,0,0,.36) 93%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,#000 0%,#000 62%,rgba(0,0,0,.86) 72%,rgba(0,0,0,.46) 88%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.36) 7%,rgba(0,0,0,.82) 15%,#000 25%,#000 75%,rgba(0,0,0,.82) 85%,rgba(0,0,0,.36) 93%,transparent 100%);
+      mask-composite:intersect;
+    }
+    .hero .image-tools,
+    .month-art .image-tools,
+    .vertical-copy{position:absolute}
+    .hero > img:not(.image-feather-extension),
+    .month-art > img:not(.image-feather-extension){
+      width:100%!important;
+      height:100%!important;
+      left:0;
+      top:0;
+      object-fit:cover;
+      object-position:center center;
+      z-index:0;
+      -webkit-mask-image:
+        linear-gradient(to right,#000 0%,#000 74%,rgba(0,0,0,.82) 86%,rgba(0,0,0,.36) 96%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.34) 7%,rgba(0,0,0,.82) 15%,#000 25%,#000 75%,rgba(0,0,0,.82) 85%,rgba(0,0,0,.34) 93%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,#000 0%,#000 74%,rgba(0,0,0,.82) 86%,rgba(0,0,0,.36) 96%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.34) 7%,rgba(0,0,0,.82) 15%,#000 25%,#000 75%,rgba(0,0,0,.82) 85%,rgba(0,0,0,.34) 93%,transparent 100%);
+      mask-composite:intersect;
+    }
+    .hero > .image-feather-extension,
+    .month-art > .image-feather-extension{
+      position:absolute;
+      left:78%;
+      top:0;
+      width:54%!important;
+      height:100%!important;
+      max-width:none;
+      object-fit:cover;
+      object-position:right center;
+      pointer-events:none;
+      z-index:1;
+      opacity:.72!important;
+      -webkit-mask-image:
+        linear-gradient(to right,transparent 0%,rgba(0,0,0,.64) 18%,rgba(0,0,0,.42) 56%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.38) 8%,#000 22%,#000 78%,rgba(0,0,0,.38) 92%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,transparent 0%,rgba(0,0,0,.64) 18%,rgba(0,0,0,.42) 56%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.38) 8%,#000 22%,#000 78%,rgba(0,0,0,.38) 92%,transparent 100%);
+      mask-composite:intersect;
+    }
+    .nav{z-index:40;background-color:#fbfaf8!important}
+    html[data-skin="sea-salt"][data-cal-view="home"] .nav{
+      background-image:url("assets/skin1/03-top-nav_1440x76.svg"),linear-gradient(180deg,#fffde9 0%,#f4fbf3 100%)!important;
+      background-size:100% 100%,100% 100%!important;
+      background-position:center,center!important;
+      background-repeat:no-repeat,no-repeat!important;
+    }
+    html[data-skin="sea-salt"]:not([data-cal-view="home"]) .nav{
+      background-image:url("assets/skin1/03-top-nav_1440x76 2.svg"),linear-gradient(180deg,#fffde9 0%,#f4fbf3 100%)!important;
+      background-size:100% 100%,100% 100%!important;
+      background-position:center,center!important;
+      background-repeat:no-repeat,no-repeat!important;
+    }
+    html[data-skin] .split,
+    html[data-skin] .calendar-layout,
+    .split,
+    .calendar-layout{overflow:hidden!important}
+    html[data-skin] .hero,
+    html[data-skin] .month-art,
+    html[data-skin="sea-salt"] .hero,
+    html[data-skin="sea-salt"] .day-page .hero,
+    html[data-skin="sea-salt"] .month-art{
+      position:relative;
+      overflow:hidden!important;
+      isolation:auto!important;
+      background:transparent!important;
+    }
+    html[data-skin] .hero > img:not(.image-feather-extension),
+    html[data-skin] .month-art > img:not(.image-feather-extension),
+    .hero > img:not(.image-feather-extension),
+    .month-art > img:not(.image-feather-extension){
+      position:relative!important;
+      left:auto!important;
+      top:auto!important;
+      width:100%!important;
+      height:100%!important;
+      max-width:100%!important;
+      display:block!important;
+      object-fit:cover;
+      object-position:center center;
+      pointer-events:auto!important;
+      z-index:auto!important;
+      opacity:1!important;
+      -webkit-mask-image:
+        linear-gradient(to right,#000 0%,#000 70%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.28) 94%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.30) 7%,rgba(0,0,0,.78) 15%,#000 26%,#000 74%,rgba(0,0,0,.78) 85%,rgba(0,0,0,.30) 93%,transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:
+        linear-gradient(to right,#000 0%,#000 70%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.28) 94%,transparent 100%),
+        linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.30) 7%,rgba(0,0,0,.78) 15%,#000 26%,#000 74%,rgba(0,0,0,.78) 85%,rgba(0,0,0,.30) 93%,transparent 100%);
+      mask-composite:intersect;
+    }
+    .image-feather-extension{display:none!important}
+    html[data-skin] .hero:after,
+    html[data-skin] .month-art:after,
+    .hero:after,
+    .month-art:after{display:none!important}
+    html[data-skin="sea-salt"] .nav{padding:0 4.9%!important}
+    html[data-skin="sea-salt"] .nav-links{
+      gap:42px!important;
+      height:100%;
+      align-items:center;
+    }
+    html[data-skin="sea-salt"] .nav-btn{
+      width:104px!important;
+      height:52px!important;
+      flex:0 0 104px!important;
+      padding:0!important;
+    }
+    html[data-skin="sea-salt"] .task{
+      position:relative;
+      isolation:isolate;
+      z-index:0;
+      align-items:center;
+      background:none!important;
+    }
+    html[data-skin="sea-salt"] .task:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background:url("assets/skin1/10-task-row_760x58 2.png") left center/100% 58px no-repeat;
+      opacity:1;
+      transition:opacity .22s ease;
+    }
+    html[data-skin="sea-salt"] .task > span{
+      min-width:0;
+      align-self:center;
+    }
+    html[data-skin="sea-salt"] .task .check{
+      align-self:center;
+      justify-self:center;
+    }
+    html[data-skin="sea-salt"] .task .check,
+    html[data-skin="sea-salt"] .activity-card .check{
+      opacity:1!important;
+      z-index:3;
+      border-color:transparent!important;
+      background:transparent!important;
+      box-shadow:none!important;
+    }
+    html[data-skin="sea-salt"] .check:checked{
+      background:transparent!important;
+      border-color:transparent!important;
+      box-shadow:none!important;
+    }
+    html[data-skin="sea-salt"] .check:checked:after{
+      content:"✓";
+      color:#fff;
+      text-shadow:0 1px 4px rgba(50,140,210,.42);
+    }
+    html[data-skin="sea-salt"] .task.done{
+      opacity:1!important;
+      background-image:none!important;
+      filter:none!important;
+    }
+    html[data-skin="sea-salt"] .task.done:before{
+      background-image:url("assets/skin1/10-task-row_760x58.png");
+      opacity:.62;
+    }
+    html[data-skin="sea-salt"] .flower{
+      z-index:8;
+      color:#72bdf4;
+      filter:drop-shadow(0 2px 4px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(123,199,255,.45));
+    }
+    @font-face{
+      font-family:"SourceHanSerifCN";
+      src:local("Source Han Serif CN"),local("SourceHanSerifCN-Regular");
+      font-weight:400;
+      font-style:normal;
+      font-display:swap;
+    }
+    @font-face{
+      font-family:"SourceHanSerifCN";
+      src:url("assets/skin2/SourceHanSerifCN-Heavy.ttf") format("truetype");
+      font-weight:900;
+      font-style:normal;
+      font-display:swap;
+    }
+    @font-face{
+      font-family:"SourceHanSerifCN-Heavy";
+      src:url("assets/skin2/SourceHanSerifCN-Heavy.ttf") format("truetype");
+      font-weight:900;
+      font-style:normal;
+      font-display:swap;
+    }
+    html[data-skin="metal-undertow"]{
+      --accent:#9a7942;
+      --accent-soft:#d8c6a4;
+      --accent-pale:#eee7d9;
+    }
+    html[data-skin="metal-undertow"] body,
+    html[data-skin="metal-undertow"] body *{
+      font-family:"SourceHanSerifCN-Heavy","SourceHanSerifCN","Source Han Serif CN","Noto Serif SC",serif;
+      font-weight:900;
+    }
+    html[data-skin="metal-undertow"] .date-big,
+    html[data-skin="metal-undertow"] .date-big *,
+    html[data-skin="metal-undertow"] .settings,
+    html[data-skin="metal-undertow"] .settings *,
+    html[data-skin="metal-undertow"] .modal,
+    html[data-skin="metal-undertow"] .modal *{
+      font-family:"SourceHanSerifCN","Source Han Serif CN","Noto Serif SC",serif;
+      font-weight:500;
+    }
+    html[data-skin="metal-undertow"] body{background:#101111}
+    html[data-skin="metal-undertow"] .shell{background:url("assets/skin2/02-app-shell-paper_1440x900.svg") center/100% 100% no-repeat!important}
+    html[data-skin="metal-undertow"] .nav{
+      border:0;
+      background-color:#101111!important;
+      background:center/100% 100% no-repeat!important;
+      backdrop-filter:none;
+    }
+    html[data-skin="metal-undertow"][data-cal-view="home"] .nav{background-image:url("assets/skin2/03-top-nav_1440x76.svg")!important}
+    html[data-skin="metal-undertow"]:not([data-cal-view="home"]) .nav{background-image:url("assets/skin2/03-top-nav-month_1440x76.svg")!important}
+    html[data-skin="metal-undertow"] .nav{padding:0 4.9%!important}
+    html[data-skin="metal-undertow"] .nav-links{gap:42px!important;height:100%;align-items:center}
+    html[data-skin="metal-undertow"] .nav-btn{width:104px!important;height:52px!important;flex:0 0 104px!important;padding:0!important;color:transparent!important;text-shadow:none}
+    html[data-skin="metal-undertow"] .nav-btn.active:after{display:none}
+    html[data-skin="metal-undertow"] .gear svg{opacity:0}
+    html[data-skin="metal-undertow"] .calendar-layout .cal-wrap{background:url("assets/skin2/09-month-calendar-board_936x824.svg") center/100% 100% no-repeat}
+    html[data-skin="metal-undertow"] .task{min-height:58px;border:0;background:url("assets/skin2/10-task-row_760x58.svg") left center/100% 58px no-repeat!important;padding:0 20px 0 18px}
+    html[data-skin="metal-undertow"] .task.done{opacity:1!important;background-image:url("assets/skin2/10-task-row-done_760x58.svg")!important;filter:none!important}
+    html[data-skin="metal-undertow"] .task .check{opacity:0}
+    html[data-skin="metal-undertow"] .day{border:0;background:url("assets/skin2/11-calendar-cell_122x108.svg") center/100% 100% no-repeat!important}
+    html[data-skin="metal-undertow"] .day.today{box-shadow:inset 0 0 0 2px rgba(154,121,66,.58);background-color:transparent!important}
+    html[data-skin="metal-undertow"] .day.today .num{background:rgba(255,255,255,.58)}
+    html[data-skin="metal-undertow"] .activity-card{border:0;box-shadow:none;background:url("assets/skin2/12-activity-card_760x116.svg") center/100% 100% no-repeat}
+    html[data-skin="metal-undertow"] .activity-card:after{display:none}
+    html[data-skin="metal-undertow"] .settings{background:url("assets/skin2/13-settings-panel_410x720.svg") center/100% 100% no-repeat!important;box-shadow:none;border-radius:18px}
+    html[data-skin="metal-undertow"] .settings:before{display:none}
+    html[data-skin="metal-undertow"] .modal{background:url("assets/skin2/14-modal-panel_660x560.svg") center/100% 100% no-repeat!important;box-shadow:none;border-radius:24px}
+    html[data-skin="metal-undertow"] .quick-today{border:0;background:url("assets/skin2/15-floating-today-button_64x64.svg") center/100% 100% no-repeat!important;box-shadow:none;color:transparent}
+    html[data-skin="metal-undertow"] .quick-today svg{opacity:0}
+    html[data-skin="metal-undertow"] .skin-option{border:2px solid rgba(158,126,70,.58);background:rgba(255,255,255,.54);box-shadow:inset 0 0 10px rgba(158,126,70,.16);color:#715629}
+    html[data-skin="metal-undertow"] .skin-option.active{background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(216,198,164,.62));border-color:#9a7942;color:#4c3716}
+          </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+  <script>
+    (() => {
+      const key = 'calendar.skin';
+      const dockKey = 'calendar.monthCopyDock';
+      const textKey = 'calendar.imageTextHidden';
+      const root = document.documentElement;
+      let pendingImageTarget = null;
+
+      function currentView() {
+        if (document.querySelector('.calendar-layout')) return 'calendar';
+        if (document.querySelector('.day-page')) return 'day';
+        return 'home';
+      }
+
+      function applySkin() {
+        root.dataset.skin = localStorage.getItem(key) || 'default';
+        root.dataset.calView = currentView();
+        root.dataset.imageText = localStorage.getItem(textKey) === '1' ? 'hidden' : 'visible';
+        injectSkinSwitcher();
+        setupImageTextDrag();
+        setupFeatherExtensions();
+        setupImageTools();
+        applyStoredImages();
+        normalizeCalendarRows();
+      }
+
+      function injectSkinSwitcher() {
+        const settings = document.querySelector('.settings');
+        if (!settings || settings.querySelector('[data-skin-switcher]')) return;
+        const title = settings.querySelector(':scope > h2');
+        if (!title) return;
+
+        const section = document.createElement('section');
+        section.className = 'setting-block';
+        section.dataset.skinSwitcher = 'true';
+        section.innerHTML = `
+          <div class="setting-title">皮肤切换</div>
+          <div class="skin-options">
+            <button class="skin-option" data-skin-option="default" type="button">默认</button>
+            <button class="skin-option" data-skin-option="sea-salt" type="button">海盐软糖</button>
+            <button class="skin-option" data-skin-option="metal-undertow" type="button">金属暗潮</button>
+          </div>
+        `;
+        title.insertAdjacentElement('afterend', section);
+        syncButtons(section);
+      }
+
+      function syncButtons(scope = document) {
+        const active = localStorage.getItem(key) || 'default';
+        scope.querySelectorAll('[data-skin-option]').forEach(button => {
+          button.classList.toggle('active', button.dataset.skinOption === active);
+        });
+      }
+
+      function setupImageTextDrag() {
+        const copy = document.querySelector('.month-art .vertical-copy');
+        if (!copy) return;
+        copy.dataset.dock = localStorage.getItem(dockKey) || 'left';
+        if (copy.dataset.dragReady) return;
+        copy.dataset.dragReady = 'true';
+        copy.addEventListener('pointerdown', startDrag);
+      }
+
+      function startDrag(event) {
+        const copy = event.currentTarget;
+        const host = copy.closest('.month-art');
+        if (!host) return;
+        event.preventDefault();
+        copy.setPointerCapture(event.pointerId);
+
+        const hostRect = host.getBoundingClientRect();
+        const copyRect = copy.getBoundingClientRect();
+        const start = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          left: copyRect.left - hostRect.left,
+          top: copyRect.top - hostRect.top
+        };
+
+        copy.dataset.dock = 'free';
+        copy.style.left = `${start.left}px`;
+        copy.style.top = `${start.top}px`;
+        copy.style.right = 'auto';
+        copy.style.bottom = 'auto';
+
+        const move = moveEvent => {
+          const liveHost = host.getBoundingClientRect();
+          const liveCopy = copy.getBoundingClientRect();
+          const maxLeft = Math.max(0, liveHost.width - liveCopy.width);
+          const maxTop = Math.max(0, liveHost.height - liveCopy.height);
+          const nextLeft = Math.min(Math.max(0, start.left + moveEvent.clientX - start.x), maxLeft);
+          const nextTop = Math.min(Math.max(0, start.top + moveEvent.clientY - start.y), maxTop);
+          copy.style.left = `${nextLeft}px`;
+          copy.style.top = `${nextTop}px`;
+        };
+
+        const end = endEvent => {
+          copy.releasePointerCapture(start.pointerId);
+          copy.removeEventListener('pointermove', move);
+          copy.removeEventListener('pointerup', end);
+          copy.removeEventListener('pointercancel', end);
+
+          const liveHost = host.getBoundingClientRect();
+          const liveCopy = copy.getBoundingClientRect();
+          const centerX = liveCopy.left - liveHost.left + liveCopy.width / 2;
+          const centerY = liveCopy.top - liveHost.top + liveCopy.height / 2;
+          let dock = centerY > liveHost.height * .62 ? 'bottom' : centerX > liveHost.width * .55 ? 'right' : 'left';
+          localStorage.setItem(dockKey, dock);
+          applyDock(copy, dock);
+        };
+
+        copy.addEventListener('pointermove', move);
+        copy.addEventListener('pointerup', end);
+        copy.addEventListener('pointercancel', end);
+      }
+
+      function applyDock(copy, dock) {
+        copy.dataset.dock = dock;
+        copy.style.left = '';
+        copy.style.top = '';
+        copy.style.right = '';
+        copy.style.bottom = '';
+      }
+
+      function setupImageTools() {
+        document.querySelectorAll('.hero,.month-art').forEach(host => {
+          if (host.querySelector(':scope > .image-tools')) return;
+          const tools = document.createElement('div');
+          tools.className = 'image-tools';
+          tools.innerHTML = `
+            <button class="image-tool-btn" data-image-action="change" type="button">更换图片</button>
+            <button class="image-tool-btn" data-image-action="toggle-text" type="button"></button>
+          `;
+          host.appendChild(tools);
+        });
+        syncImageTextButtons();
+        ensureImageInput();
+      }
+
+      function setupFeatherExtensions() {
+        document.querySelectorAll('.image-feather-extension').forEach(extension => extension.remove());
+      }
+
+      function normalizeCalendarRows() {
+        const calWrap = document.querySelector('.calendar-layout .cal-wrap');
+        const days = document.querySelector('.calendar-layout .days');
+        if (!calWrap || !days) return;
+
+        let cells = Array.from(days.children).filter(cell => cell.classList.contains('day'));
+        if (cells.length > 35) {
+          cells.slice(35).forEach(cell => cell.remove());
+        }
+
+        cells = Array.from(days.children).filter(cell => cell.classList.contains('day'));
+        while (cells.length < 35) {
+          const last = cells[cells.length - 1];
+          const next = offsetDate(last?.dataset.date, 1);
+          const day = document.createElement('div');
+          day.className = 'day muted calendar-added-day';
+          day.tabIndex = 0;
+          day.dataset.date = next;
+          day.innerHTML = `<div class="num">${Number(next.slice(-2))}</div>`;
+          days.appendChild(day);
+          wireCalendarDay(day);
+          cells.push(day);
+        }
+
+        calWrap.style.setProperty('--calendar-rows', '5');
+      }
+
+      function offsetDate(value, offset) {
+        const base = value ? value.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()];
+        const date = new Date(base[0], base[1] - 1, base[2] + offset);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function wireCalendarDay(day) {
+        day.addEventListener('click', event => {
+          if (event.target.closest('.cal-task')) return;
+          if (typeof state === 'undefined' || typeof parse === 'undefined' || typeof render === 'undefined') return;
+          state.date = parse(day.dataset.date);
+          state.view = 'day';
+          render();
+        });
+        day.addEventListener('keydown', event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          day.click();
+        });
+      }
+
+      function syncImageTextButtons() {
+        const hidden = localStorage.getItem(textKey) === '1';
+        document.querySelectorAll('[data-image-action="toggle-text"]').forEach(button => {
+          button.textContent = hidden ? '显示文字' : '隐藏文字';
+        });
+      }
+
+      function ensureImageInput() {
+        if (document.getElementById('skin-image-input')) return;
+        const input = document.createElement('input');
+        input.id = 'skin-image-input';
+        input.type = 'file';
+        input.accept = 'image/png,image/jpeg,image/webp';
+        input.hidden = true;
+        input.addEventListener('change', handleImageFile);
+        document.body.appendChild(input);
+      }
+
+      function imageTargetFor(host) {
+        if (host.classList.contains('month-art') || host.closest('.day-page')) {
+          return { type: 'month', month: currentMonthKey() };
+        }
+        return { type: 'home' };
+      }
+
+      function currentMonthKey() {
+        const monthTitle = document.querySelector('.month-title')?.textContent || '';
+        const titleMatch = monthTitle.match(/\.(\d{1,2})/);
+        if (titleMatch) return String(Number(titleMatch[1])).padStart(2, '0');
+        const visibleMonth = document.querySelector('.date-big .month')?.textContent || '';
+        const dateMatch = visibleMonth.match(/\d{1,2}/);
+        return String(Number(dateMatch ? dateMatch[0] : new Date().getMonth() + 1)).padStart(2, '0');
+      }
+
+      async function handleImageFile(event) {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file || !pendingImageTarget) return;
+        if (file.size > 10 * 1024 * 1024) {
+          showSkinToast('每张图片不能超过 10MB');
+          pendingImageTarget = null;
+          return;
+        }
+        try {
+          const imageData = await readImage(file);
+          if (pendingImageTarget.type === 'home') {
+            localStorage.setItem('calendar.homeImage', imageData);
+            showSkinToast('首页图片已更新');
+          } else {
+            const images = JSON.parse(localStorage.getItem('calendar.monthImages') || '{}');
+            images[pendingImageTarget.month] = imageData;
+            localStorage.setItem('calendar.monthImages', JSON.stringify(images));
+            localStorage.setItem('calendar.monthImageMode', 'monthly');
+            showSkinToast(`${Number(pendingImageTarget.month)} 月图片已更新`);
+          }
+          pendingImageTarget = null;
+          applyStoredImages();
+        } catch {
+          pendingImageTarget = null;
+          showSkinToast('图片过大，无法本地保存');
+        }
+      }
+
+      function readImage(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = reject;
+          reader.onload = () => {
+            const image = new Image();
+            image.onerror = reject;
+            image.onload = () => {
+              const scale = Math.min(1, 1400 / Math.max(image.width, image.height));
+              const canvas = document.createElement('canvas');
+              canvas.width = Math.round(image.width * scale);
+              canvas.height = Math.round(image.height * scale);
+              canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+              resolve(canvas.toDataURL('image/webp', .78));
+            };
+            image.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function applyStoredImages() {
+        const homeImage = localStorage.getItem('calendar.homeImage');
+        const monthImage = localStorage.getItem('calendar.monthImage');
+        let monthImages = {};
+        try {
+          monthImages = JSON.parse(localStorage.getItem('calendar.monthImages') || '{}');
+        } catch {
+          monthImages = {};
+        }
+
+        const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
+        if (homeHero && homeImage) homeHero.src = homeImage;
+
+        document.querySelectorAll('.month-art img:not(.image-feather-extension),.day-page .hero img:not(.image-feather-extension)').forEach(img => {
+          const month = currentMonthKey();
+          const src = monthImages[month] || monthImage;
+          if (src) img.src = src;
+        });
+        setupFeatherExtensions();
+      }
+
+      function showSkinToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(showSkinToast.timer);
+        showSkinToast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+
+      document.addEventListener('click', event => {
+        const imageButton = event.target.closest('[data-image-action]');
+        if (imageButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          const host = imageButton.closest('.hero,.month-art');
+          if (!host) return;
+          if (imageButton.dataset.imageAction === 'change') {
+            pendingImageTarget = imageTargetFor(host);
+            document.getElementById('skin-image-input')?.click();
+          } else {
+            const hidden = localStorage.getItem(textKey) === '1';
+            localStorage.setItem(textKey, hidden ? '0' : '1');
+            root.dataset.imageText = hidden ? 'visible' : 'hidden';
+            syncImageTextButtons();
+          }
+          return;
+        }
+        const button = event.target.closest('[data-skin-option]');
+        if (!button) return;
+        localStorage.setItem(key, button.dataset.skinOption);
+        applySkin();
+        syncButtons();
+      });
+
+      new MutationObserver(applySkin).observe(document.getElementById('app'), {
+        childList: true,
+        subtree: true
+      });
+      window.addEventListener('storage', applySkin);
+      applySkin();
+    })();
+  </script>
+</body>
+</html>
