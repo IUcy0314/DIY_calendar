@@ -451,6 +451,83 @@
     html[data-skin="metal-undertow"] .quick-today svg{opacity:0}
     html[data-skin="metal-undertow"] .skin-option{border:2px solid rgba(158,126,70,.58);background:rgba(255,255,255,.54);box-shadow:inset 0 0 10px rgba(158,126,70,.16);color:#715629}
     html[data-skin="metal-undertow"] .skin-option.active{background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(216,198,164,.62));border-color:#9a7942;color:#4c3716}
+    html[data-skin="sea-salt"] main.page.split:not(.day-page) .task{
+      min-height:64px!important;
+      padding-top:3px;
+      padding-bottom:3px;
+    }
+    html[data-skin="sea-salt"] main.page.split:not(.day-page) .task:before{
+      inset:3px 0;
+      background-size:100% 58px;
+    }
+    html[data-skin="metal-undertow"] .date-big{
+      font-size:clamp(83px,8vw,138px)!important;
+    }
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .task,
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .task-title,
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .task-time{
+      color:#fff!important;
+    }
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .task.done .task-title{
+      color:rgba(255,255,255,.82)!important;
+    }
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .upcoming.has-items{
+      background:rgba(232,232,232,.76);
+      border:1px solid rgba(255,255,255,.42);
+      border-radius:6px;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);
+      padding:14px 18px 15px;
+      margin-left:-9px;
+      width:min(100%,760px);
+      color:#1f2025;
+    }
+    html[data-skin="metal-undertow"] main.page.split:not(.day-page) .upcoming.is-empty{
+      background:none;
+      padding-left:9px;
+      color:#1f2025;
+    }
+    html[data-skin="metal-undertow"] .day-page .activity-card{
+      grid-template-columns:58px 1fr auto;
+      align-items:center;
+      min-height:116px;
+      border:1px solid rgba(255,255,255,.46);
+      border-radius:8px;
+      background:
+        linear-gradient(105deg,rgba(255,255,255,.82) 0%,rgba(235,236,237,.7) 44%,rgba(250,250,250,.76) 100%)!important;
+      box-shadow:0 10px 26px rgba(0,0,0,.14);
+      backdrop-filter:blur(2px);
+    }
+    html[data-skin="metal-undertow"] .day-page .activity-card .card-check{
+      width:51px;
+      height:58px;
+      align-self:center;
+      justify-self:center;
+      border:0!important;
+      border-radius:0!important;
+      background:transparent url("assets/skin2/task-row-panel.png") center/contain no-repeat!important;
+      box-shadow:none!important;
+    }
+    html[data-skin="metal-undertow"] .day-page .activity-card .card-check:checked{
+      border:0!important;
+      background:transparent url("assets/skin2/task-row-panel-done.png") center/contain no-repeat!important;
+      box-shadow:none!important;
+    }
+    html[data-skin="metal-undertow"] .day-page .activity-card .card-check:checked:after{
+      content:none!important;
+    }
+    html[data-skin="metal-undertow"] .modal{
+      background:
+        linear-gradient(135deg,rgba(246,246,246,.98),rgba(213,214,214,.96) 48%,rgba(244,244,244,.98)),
+        radial-gradient(circle at 12% 16%,rgba(255,255,255,.72),transparent 34%),
+        linear-gradient(90deg,rgba(110,110,110,.18),transparent 18%,transparent 82%,rgba(70,70,70,.16))!important;
+      border:1px solid rgba(22,23,24,.32);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.42),0 22px 54px rgba(0,0,0,.34);
+      background-size:100% 100%!important;
+      color:#202126;
+    }
+    html[data-skin="metal-undertow"] .modal-head{
+      border-bottom-color:rgba(32,33,36,.18);
+    }
           </style>
 </head>
 <body>
@@ -475,9 +552,12 @@
       }
 
       function applySkin() {
-        root.dataset.skin = localStorage.getItem(key) || 'default';
-        root.dataset.calView = currentView();
-        root.dataset.imageText = localStorage.getItem(textKey) === '1' ? 'hidden' : 'visible';
+        const nextSkin = localStorage.getItem(key) || 'default';
+        const nextView = currentView();
+        const nextImageText = localStorage.getItem(textKey) === '1' ? 'hidden' : 'visible';
+        if (root.dataset.skin !== nextSkin) root.dataset.skin = nextSkin;
+        if (root.dataset.calView !== nextView) root.dataset.calView = nextView;
+        if (root.dataset.imageText !== nextImageText) root.dataset.imageText = nextImageText;
         injectSkinSwitcher();
         setupImageTextDrag();
         setupFeatherExtensions();
@@ -755,13 +835,15 @@
       function applyStoredImages() {
         const homeHero = document.querySelector('main.page.split:not(.day-page) .hero img');
         if (homeHero && typeof currentHomeImage === 'function' && typeof setImageSource === 'function') {
-          setImageSource(homeHero, currentHomeImage());
+          const homeSrc = currentHomeImage();
+          if (homeHero.dataset.sourceKey !== homeSrc) setImageSource(homeHero, homeSrc);
         }
 
         document.querySelectorAll('.month-art img:not(.image-feather-extension),.day-page .hero img:not(.image-feather-extension)').forEach(img => {
           if (typeof monthImageFor !== 'function' || typeof setImageSource !== 'function') return;
           const month = Number(currentMonthKey()) || new Date().getMonth() + 1;
-          setImageSource(img, monthImageFor(new Date(2026, month - 1, 1)));
+          const monthSrc = monthImageFor(new Date(2026, month - 1, 1));
+          if (img.dataset.sourceKey !== monthSrc) setImageSource(img, monthSrc);
         });
         setupFeatherExtensions();
       }
